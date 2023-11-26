@@ -61,3 +61,41 @@ const Player = (function(){
     }
     return {createPlayer}
 })();
+
+
+const controller = (function(){
+    let playerCount = 1
+    let player1 = Player.createPlayer(`Player ${playerCount}`)
+    player1.setMarker('X')
+    playerCount++;
+    let player2 = Player.createPlayer(`Player ${playerCount}`)
+    player2.setMarker('O')
+
+    const playRound = () =>{
+        let activePlayer = player1
+        const switchTurn = () =>{
+        activePlayer = activePlayer == player1 ? player2 : player1;
+        const getActivePlayer = () => activePlayer
+        while(true){
+            console.log(`${getActivePlayer().getName()}'s turn`);
+            gameBoard.chooseField(getActivePlayer())
+            switchTurn()
+        }
+        
+    }
+}
+
+const playGame = (numberOfGames=3) =>{
+    for(i = 0 ; i < numberOfGames ; i++)
+    {
+        console.log(`Game number ${i+1}`)
+        player1.setName(prompt('Choose your name!'))
+        playRound()
+        gameBoard.setBoard([0,0,0,0,0,0,0,0,0])
+    }
+
+    console.log(player1.getPoints() , player2.getPoints())
+    
+}
+return {playRound,playGame}
+})();
