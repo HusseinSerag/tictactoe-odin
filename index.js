@@ -23,6 +23,7 @@ const cell = (function(){
     return {createCell}
 })();
 const gameBoard = (function(){
+    let gameFinished = false
     let board = []
     let winningConditions = [[0,1,2],
                             [3,4,5],
@@ -34,6 +35,10 @@ const gameBoard = (function(){
                             [2,4,6]]
     for(let i = 0 ; i<9 ; i++){
         board.push(cell.createCell(i))
+    }
+    const getGameFinished = () => gameFinished
+    const setGameFinished = (newValue) =>{
+        gameFinished = newValue
     }
     const getWinningConditions = () => winningConditions
     const getBoard = () => board
@@ -55,7 +60,7 @@ const gameBoard = (function(){
      
      return false
      }
-     return {getBoard,chooseField , getWinningConditions , setBoard}
+     return {getBoard,chooseField , getWinningConditions , setBoard , getGameFinished , setGameFinished}
 
 })();
 
@@ -130,7 +135,11 @@ const controller = (function(){
         const switchTurn = () =>{
         activePlayer = activePlayer == player1 ? player2 : player1;
         }
+        const startOverActivePlayer = () =>{
+            activePlayer = player1
+        }
         const getActivePlayer = () => activePlayer
+        
     const playRound = (target) =>{
         
         
@@ -152,11 +161,13 @@ const controller = (function(){
         if(result == true){
             console.log(`${getActivePlayer().getName()} won!`)
             getActivePlayer().winRound()
-            return ' done'
+            gameBoard.setGameFinished(true)
+            return 2
         }
         if(gameBoard.getBoard().every(cell => cell.getChosen() == true)){
             console.log('Draw!')
-            return ' draw'
+            gameBoard.setGameFinished(true)
+            return 1
         }
             switchTurn()
             
@@ -166,28 +177,49 @@ const controller = (function(){
 }
 
 
-return {playRound,player1,player2}
+return {playRound,player1,player2,startOverActivePlayer}
 })();
 
 const controllerDOM = (function(){
    let players = document.querySelectorAll('input[class^=player]')
    let button = document.querySelector('.start')
    let xoContainer = document.querySelector('.x-o-container')
+   let restartBtn = document.querySelector('.start.restart')
    xoContainer.addEventListener('click', e=>{
     console.log(e.target)
    })
+
+   
    const renderDisplay = () =>{
     for(let i = 0 ; i < gameBoard.getBoard().length ; i++){
         let cell  = document.createElement('div')
         cell.classList.add('cell')
         cell.dataset.number = i
+        
         cell.addEventListener('click',e=>{
-            controller.playRound(cell)
+            if(gameBoard.getGameFinished() == false)
+                value = controller.playRound(cell)
+            
+            
+            
         })
         xoContainer.append(cell)
         
     }
    }
+   restartBtn.addEventListener('click',()=>{
+    Array.from(xoContainer.children).forEach(child =>{
+        xoContainer.removeChild(child)
+    })
+    controller.startOverActivePlayer()
+    gameBoard.setBoard([])
+    gameBoard.setGameFinished(false)
+    for(let i = 0 ; i<9 ; i++){
+        gameBoard.getBoard().push(cell.createCell(i))
+    }
+    
+    renderDisplay()
+   })
    button.addEventListener('click',()=>{
     let player1 = players[0].value
     if(player1 == ''){
@@ -201,7 +233,7 @@ const controllerDOM = (function(){
     }
    
     controller.player2.setName(player2)
-    button.textContent = 'Restart'
+    
     renderDisplay()
     
    })
