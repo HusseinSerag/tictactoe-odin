@@ -1,5 +1,4 @@
 const gameBoard = (function(){
-
     let board = [0,0,0,0,0,0,0,0,0]
     let winningConditions = [[0,1,2],
                             [3,4,5],
@@ -11,15 +10,13 @@ const gameBoard = (function(){
                             [2,4,6]]
 
     const getWinningConditions = () => winningConditions
-    const getBoard = () => gameBoard.board
+    const getBoard = () => board
     const setBoard = updatedBoard => {
-        gameBoard.board = updatedBoard
+        board = updatedBoard
     }
     const chooseField = (player) =>{
         let newBoard = getBoard()
         let row;
-        
-     
         do{
           row = parseInt(prompt('row')) 
         }
@@ -71,18 +68,60 @@ const controller = (function(){
     let player2 = Player.createPlayer(`Player ${playerCount}`)
     player2.setMarker('O')
 
+    const checkWinner = (activePlayer) =>{
+        let activePlayerPosition = []
+        for(let i = 0 ; i < gameBoard.getBoard().length ; i++){
+            if(gameBoard.getBoard()[i] == activePlayer.getMarker())
+            activePlayerPosition.push(i) 
+        }
+        let result = gameBoard.getWinningConditions().some(element =>{
+            isAllEqual = element.every(number =>{
+                for(let i = 0 ; i < gameBoard.getBoard().length ; i++){
+
+                    if(activePlayerPosition[i] == number){
+                        return true
+                    }
+                }
+               return false
+            })
+            if(isAllEqual == true){
+                return true
+            }
+            else{
+                return false
+            }
+        })
+        if(result){
+            
+            return result
+        }
+        else 
+        return false
+    }
+
     const playRound = () =>{
         let activePlayer = player1
         const switchTurn = () =>{
         activePlayer = activePlayer == player1 ? player2 : player1;
+        }
         const getActivePlayer = () => activePlayer
         while(true){
             console.log(`${getActivePlayer().getName()}'s turn`);
             gameBoard.chooseField(getActivePlayer())
+            result = checkWinner(getActivePlayer())
+        if(result == true){
+            console.log(`${getActivePlayer().getName()} won!`)
+            getActivePlayer().winRound()
+            break
+        }
+        if(gameBoard.getBoard().every(cell => cell !=0)){
+            console.log('Draw!')
+            break
+        }
             switchTurn()
         }
         
-    }
+    
 }
 
 const playGame = (numberOfGames=3) =>{
@@ -99,3 +138,5 @@ const playGame = (numberOfGames=3) =>{
 }
 return {playRound,playGame}
 })();
+
+controller.playGame()
