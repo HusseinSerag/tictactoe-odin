@@ -1,5 +1,63 @@
+@font-face {
+    font-family: game;
+    src: url(./fonts/LadylikeBB.ttf);
+}
 *{
     box-sizing: border-box;
     margin:0;
     padding:0;
+    font-family: game;
+}
+body{
+    height: 100vh;
+    width: 100vw;
+    background-color: #CBC3E3;
+    
+    display:flex;
+    justify-content: center;
+   
+}
+.container{
+    display: grid;
+    grid-template-columns:  1fr 1fr;
+    grid-auto-rows: min-content;
+    width:clamp(300px,50%,600px);
+    gap:80px;
+   
+    
+    
+}
+h1[class=title]{
+    
+    grid-column: 1/3;
+    justify-self:center;
+    font-size: 55px;
+}
+
+.names{
+    display: flex;
+    flex-flow:column nowrap;
+    align-items: center;
+    gap:1rem;
+
+}
+.names > label{
+    font-size: 2rem;
+}
+.names > input{
+    align-self: stretch;
+    height: 2rem;
+    border:none;
+    border-radius: 10px;
+
+}
+.buttons{
+    grid-column:1/3;
+    justify-self:center;
+    
+}
+.buttons > .start{
+    padding:16px  52px;
+
+    font-size: 2rem;
 }
