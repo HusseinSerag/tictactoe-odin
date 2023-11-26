@@ -17,3 +17,30 @@ const gameBoard = (function(){
     
 
 })();
+
+
+const Player = (function(){
+    const createPlayer = (name) =>{
+        let playerName = name;
+        let points = 0;
+        let marker;
+        const winRound = () =>{
+            points++
+        }
+        const setName = (name) =>{
+            playerName = name
+        }
+        const getName = ()=>{
+            return playerName
+        }
+        const getPoints = ()=>{
+            return points
+        }
+        const setMarker = (newMarker) =>{
+            marker = newMarker
+        }
+        const getMarker = () => marker
+        return {winRound , setName , getPoints , getName , setMarker , getMarker}
+    }
+    return {createPlayer}
+})();
