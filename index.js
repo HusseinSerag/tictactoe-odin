@@ -124,11 +124,18 @@ const controller = (function(){
     
 }
 
-const playGame = (numberOfGames=3) =>{
+const playGame = (numberOfGames=3,player1Name,player2Name) =>{
     for(i = 0 ; i < numberOfGames ; i++)
     {
         console.log(`Game number ${i+1}`)
-        player1.setName(prompt('Choose your name!'))
+        if(player1Name == ''){
+            player1Name = 'Player 1'
+        }
+        if(player2Name == ''){
+            player2Name = 'Player 2'
+        }
+        player1.setName(player1Name)
+        player2.setName(player2Name)
         playRound()
         gameBoard.setBoard([0,0,0,0,0,0,0,0,0])
     }
@@ -139,4 +146,15 @@ const playGame = (numberOfGames=3) =>{
 return {playRound,playGame}
 })();
 
-controller.playGame()
+const controllerDOM = (function(){
+   let players = document.querySelectorAll('input[class^=player]')
+   let button = document.querySelector('.start')
+   button.addEventListener('click',()=>{
+    let player1 = players[0].value
+    let player2 = players[1].value
+    controller.playGame(1,player1,player2)
+   })
+  
+   
+
+})();
