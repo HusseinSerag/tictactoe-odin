@@ -1,5 +1,29 @@
+const cell = (function(){
+    const createCell = (i) =>{
+        let cellNumber = i ;
+        
+        let chosen = false;
+        let marker;
+        const getMarker = () => marker;
+        const setMarker = (newMarker) =>{
+            marker = newMarker
+        }
+        const getChosen = () => chosen;
+        const setChosen  = (newValue) =>{
+            chosen = newValue
+        }
+        
+        const setCellNumber = (number) =>{
+            cellNumber = number
+        }
+        const getCellNumber = () => cellNumber
+
+        return {setCellNumber , getCellNumber , getChosen , setChosen , getMarker , setMarker}
+    }
+    return {createCell}
+})();
 const gameBoard = (function(){
-    let board = [0,0,0,0,0,0,0,0,0]
+    let board = []
     let winningConditions = [[0,1,2],
                             [3,4,5],
                             [6,7,8],
@@ -8,29 +32,33 @@ const gameBoard = (function(){
                             [2,5,8],
                             [0,4,8],
                             [2,4,6]]
-
+    for(let i = 0 ; i<9 ; i++){
+        board.push(cell.createCell(i))
+    }
     const getWinningConditions = () => winningConditions
     const getBoard = () => board
     const setBoard = updatedBoard => {
         board = updatedBoard
     }
-    const chooseField = (player) =>{
-        let newBoard = getBoard()
-        let row;
-        do{
-          row = parseInt(prompt('row')) 
+    const chooseField = (player,target) =>{
+        let newBoard = getBoard();
+        if(newBoard[target.dataset.number].getChosen() == true){
+            console.log('Chosen')
+            return true
         }
-        while(newBoard[row] != 0)
         
-     newBoard[row]= player.getMarker()
+       
+        
+     newBoard[target.dataset.number].setMarker(player.getMarker())
+     newBoard[target.dataset.number].setChosen(true)
      setBoard(newBoard)
-     for(let i = 0 ; i < getBoard().length ; i++){
-         console.log(`| ${getBoard()[i]}`)
-     }
+     
+     return false
      }
      return {getBoard,chooseField , getWinningConditions , setBoard}
 
 })();
+
 
 
 const Player = (function(){
@@ -71,7 +99,7 @@ const controller = (function(){
     const checkWinner = (activePlayer) =>{
         let activePlayerPosition = []
         for(let i = 0 ; i < gameBoard.getBoard().length ; i++){
-            if(gameBoard.getBoard()[i] == activePlayer.getMarker())
+            if(gameBoard.getBoard()[i].getMarker() == activePlayer.getMarker())
             activePlayerPosition.push(i) 
         }
         let result = gameBoard.getWinningConditions().some(element =>{
@@ -98,63 +126,86 @@ const controller = (function(){
         else 
         return false
     }
-
-    const playRound = () =>{
-        let activePlayer = player1
+    let activePlayer = player1
         const switchTurn = () =>{
         activePlayer = activePlayer == player1 ? player2 : player1;
         }
         const getActivePlayer = () => activePlayer
-        while(true){
+    const playRound = (target) =>{
+        
+        
+        
             console.log(`${getActivePlayer().getName()}'s turn`);
-            gameBoard.chooseField(getActivePlayer())
-            result = checkWinner(getActivePlayer())
+           console.log(target)
+           let value ;
+           
+            value = gameBoard.chooseField(getActivePlayer(),target)
+            if(value == true){
+                return
+            }
+            else{
+                target.textContent = getActivePlayer().getMarker()
+            }
+           
+            
+            let result = checkWinner(getActivePlayer())
         if(result == true){
             console.log(`${getActivePlayer().getName()} won!`)
             getActivePlayer().winRound()
-            break
+            return ' done'
         }
-        if(gameBoard.getBoard().every(cell => cell !=0)){
+        if(gameBoard.getBoard().every(cell => cell.getChosen() == true)){
             console.log('Draw!')
-            break
+            return ' draw'
         }
             switchTurn()
-        }
+            
+        
         
     
 }
 
-const playGame = (numberOfGames=3,player1Name,player2Name) =>{
-    for(i = 0 ; i < numberOfGames ; i++)
-    {
-        console.log(`Game number ${i+1}`)
-        if(player1Name == ''){
-            player1Name = 'Player 1'
-        }
-        if(player2Name == ''){
-            player2Name = 'Player 2'
-        }
-        player1.setName(player1Name)
-        player2.setName(player2Name)
-        playRound()
-        gameBoard.setBoard([0,0,0,0,0,0,0,0,0])
-    }
 
-    console.log(player1.getPoints() , player2.getPoints())
-    
-}
-return {playRound,playGame}
+return {playRound,player1,player2}
 })();
 
 const controllerDOM = (function(){
    let players = document.querySelectorAll('input[class^=player]')
    let button = document.querySelector('.start')
+   let xoContainer = document.querySelector('.x-o-container')
+   xoContainer.addEventListener('click', e=>{
+    console.log(e.target)
+   })
+   const renderDisplay = () =>{
+    for(let i = 0 ; i < gameBoard.getBoard().length ; i++){
+        let cell  = document.createElement('div')
+        cell.classList.add('cell')
+        cell.dataset.number = i
+        cell.addEventListener('click',e=>{
+            controller.playRound(cell)
+        })
+        xoContainer.append(cell)
+        
+    }
+   }
    button.addEventListener('click',()=>{
     let player1 = players[0].value
+    if(player1 == ''){
+        player1 = 'Player 1'
+    }
+    controller.player1.setName(player1)
+
     let player2 = players[1].value
-    controller.playGame(1,player1,player2)
+    if(player2 == ''){
+        player2 = 'Player 2'
+    }
+   
+    controller.player2.setName(player2)
+    button.textContent = 'Restart'
+    renderDisplay()
+    
    })
   
    
-
+   
 })();
