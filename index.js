@@ -10,11 +10,28 @@ const gameBoard = (function(){
                             [0,4,8],
                             [2,4,6]]
 
+    const getWinningConditions = () => winningConditions
     const getBoard = () => gameBoard.board
     const setBoard = updatedBoard => {
         gameBoard.board = updatedBoard
     }
-    
+    const chooseField = (player) =>{
+        let newBoard = getBoard()
+        let row;
+        
+     
+        do{
+          row = parseInt(prompt('row')) 
+        }
+        while(newBoard[row] != 0)
+        
+     newBoard[row]= player.getMarker()
+     setBoard(newBoard)
+     for(let i = 0 ; i < getBoard().length ; i++){
+         console.log(`| ${getBoard()[i]}`)
+     }
+     }
+     return {getBoard,chooseField , getWinningConditions , setBoard}
 
 })();
 
