@@ -134,6 +134,7 @@ const controller = (function(){
     let activePlayer = player1
         const switchTurn = () =>{
         activePlayer = activePlayer == player1 ? player2 : player1;
+        controllerDOM.renderCurrentPlayer()
         }
         const startOverActivePlayer = () =>{
             activePlayer = player1
@@ -161,12 +162,16 @@ const controller = (function(){
         if(result == true){
             console.log(`${getActivePlayer().getName()} won!`)
             getActivePlayer().winRound()
+            controllerDOM.renderCurrentPlayer(1,getActivePlayer().getName())
             gameBoard.setGameFinished(true)
+            controllerDOM.createRestartButton()
             return 2
         }
         if(gameBoard.getBoard().every(cell => cell.getChosen() == true)){
             console.log('Draw!')
+            controllerDOM.renderCurrentPlayer(2,getActivePlayer().getName())
             gameBoard.setGameFinished(true)
+            controllerDOM.createRestartButton()
             return 1
         }
             switchTurn()
@@ -177,20 +182,42 @@ const controller = (function(){
 }
 
 
-return {playRound,player1,player2,startOverActivePlayer}
+return {playRound,player1,player2,startOverActivePlayer ,getActivePlayer}
 })();
 
 const controllerDOM = (function(){
    let players = document.querySelectorAll('input[class^=player]')
    let button = document.querySelector('.start')
    let xoContainer = document.querySelector('.x-o-container')
-   let restartBtn = document.querySelector('.start.restart')
+   let gameContainer = document.querySelector('.game-container')
+   let container = document.querySelector('.container')
+   let div = document.createElement('div')
+    div.classList.add('Player')
+    gameContainer.insertBefore(div,xoContainer)
+
+
    xoContainer.addEventListener('click', e=>{
     console.log(e.target)
    })
 
-   
+   const renderCurrentPlayer = (number=0,player=undefined) =>{
+
+    
+    let currentPlayer = controller.getActivePlayer().getName()
+    if(number == 0)
+    div.textContent = `${currentPlayer}'s turn `   
+    else if(number == 1){
+        div.textContent = `${player} won!`
+    }
+    else if(number == 2){
+        div.textContent = 'Draw!'
+    }
+    
+   }
    const renderDisplay = () =>{
+    
+    
+   
     for(let i = 0 ; i < gameBoard.getBoard().length ; i++){
         let cell  = document.createElement('div')
         cell.classList.add('cell')
@@ -198,8 +225,12 @@ const controllerDOM = (function(){
         
         cell.addEventListener('click',e=>{
             if(gameBoard.getGameFinished() == false)
+            {
                 value = controller.playRound(cell)
+
+            }
             
+
             
             
         })
@@ -207,19 +238,27 @@ const controllerDOM = (function(){
         
     }
    }
-   restartBtn.addEventListener('click',()=>{
-    Array.from(xoContainer.children).forEach(child =>{
-        xoContainer.removeChild(child)
-    })
-    controller.startOverActivePlayer()
-    gameBoard.setBoard([])
-    gameBoard.setGameFinished(false)
-    for(let i = 0 ; i<9 ; i++){
-        gameBoard.getBoard().push(cell.createCell(i))
-    }
-    
-    renderDisplay()
-   })
+  createRestartButton = () =>{
+    let restartBtn = document.createElement('button')
+    restartBtn.textContent = 'Restart'
+    restartBtn.className="restart"
+    restartBtn.addEventListener('click',()=>{
+        Array.from(xoContainer.children).forEach(child =>{
+            xoContainer.removeChild(child)
+        })
+        controller.startOverActivePlayer()
+        gameBoard.setBoard([])
+        gameBoard.setGameFinished(false)
+        for(let i = 0 ; i<9 ; i++){
+            gameBoard.getBoard().push(cell.createCell(i))
+        }
+        gameContainer.removeChild(restartBtn)
+        renderCurrentPlayer()
+        renderDisplay()
+        })
+    gameContainer.appendChild(restartBtn)
+  }
+
    button.addEventListener('click',()=>{
     let player1 = players[0].value
     if(player1 == ''){
@@ -234,10 +273,16 @@ const controllerDOM = (function(){
    
     controller.player2.setName(player2)
     
+    
+       Array.from(container.children).forEach(child =>{
+        if(child.getAttribute('class') != 'game-container')
+        container.removeChild(child)
+    })
+    renderCurrentPlayer()
     renderDisplay()
     
    })
   
    
-   
+   return {renderCurrentPlayer , createRestartButton}
 })();
