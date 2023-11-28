@@ -23,7 +23,6 @@ const cell = (function(){
     return {createCell}
 })();
 const gameBoard = (function(){
-    let gameFinished = false
     let board = []
     let winningConditions = [[0,1,2],
                             [3,4,5],
@@ -33,74 +32,102 @@ const gameBoard = (function(){
                             [2,5,8],
                             [0,4,8],
                             [2,4,6]]
+    const getWinningConditions = () => winningConditions
+    const getBoard = () => board
+    const setBoard = (newBoard) =>{
+        board = newBoard
+    }
+    const clearBoard = () =>{
+        board = []
+        for(let i = 0 ; i<9 ; i++){
+            board.push(cell.createCell(i))
+        }
+    }
     for(let i = 0 ; i<9 ; i++){
         board.push(cell.createCell(i))
     }
-    const getGameFinished = () => gameFinished
-    const setGameFinished = (newValue) =>{
-        gameFinished = newValue
-    }
-    const getWinningConditions = () => winningConditions
-    const getBoard = () => board
-    const setBoard = updatedBoard => {
-        board = updatedBoard
-    }
-    const chooseField = (player,target) =>{
-        let newBoard = getBoard();
-        if(newBoard[target.dataset.number].getChosen() == true){
-            console.log('Chosen')
-            return true
-        }
-        
-       
-        
-     newBoard[target.dataset.number].setMarker(player.getMarker())
-     newBoard[target.dataset.number].setChosen(true)
-     setBoard(newBoard)
-     
-     return false
-     }
-     return {getBoard,chooseField , getWinningConditions , setBoard , getGameFinished , setGameFinished}
-
+    return {getWinningConditions , getBoard , setBoard,clearBoard}
 })();
-
-
-
-const Player = (function(){
-    const createPlayer = (name) =>{
-        let playerName = name;
+const player = (() =>{
+    let no_of_players = 1;
+    function createPlayer(name){
+        let playerNumber = no_of_players
         let points = 0;
+        let userName;
+        no_of_players++
+        let avatar;
         let marker;
-        const winRound = () =>{
-            points++
+        if(playerNumber == 1){
+            marker = 'X'
         }
-        const setName = (name) =>{
-            playerName = name
-        }
-        const getName = ()=>{
-            return playerName
-        }
-        const getPoints = ()=>{
-            return points
-        }
-        const setMarker = (newMarker) =>{
-            marker = newMarker
+        else{
+            marker = 'O'
         }
         const getMarker = () => marker
-        return {winRound , setName , getPoints , getName , setMarker , getMarker}
+        const setAvatar = (newAvatar) =>{
+            if(newAvatar == undefined){
+                if(playerNumber == 1){
+                    avatar = './photos/kiwi-catscafe.gif'
+                }
+                else{
+                    avatar = './photos/gaming-game-on.gif'
+                }
+            }
+            else
+            {
+                avatar = newAvatar
+            }
+            
+        }
+        const resetPoints = () =>{
+            points = 0
+        }
+        const getPlayerNumber = () => playerNumber
+        const getAvatar = () => avatar
+        const getName = () => userName
+        const setName = (newName) => {
+            if(newName == ''){
+                userName = `Player ${playerNumber}`
+            }
+            else{
+                userName = newName
+            }
+            
+        } 
+        const addPoints = () =>{
+            points++
+        }
+        const getPoints = () =>points
+
+        return{getName , setName , addPoints , getPoints , setAvatar , getAvatar , getPlayerNumber,getMarker,resetPoints}
     }
     return {createPlayer}
 })();
 
-
-const controller = (function(){
-    let playerCount = 1
-    let player1 = Player.createPlayer(`Player ${playerCount}`)
-    player1.setMarker('X')
-    playerCount++;
-    let player2 = Player.createPlayer(`Player ${playerCount}`)
-    player2.setMarker('O')
-
+const gameController = (function(){
+    let RoundEnded = false
+    let player1 = player.createPlayer()
+    let player2 = player.createPlayer()
+    let activePlayer = player1
+    const setRoundEnded = (newValue) =>{
+        RoundEnded = newValue
+    }
+    const getRoundEnded = () => RoundEnded
+    const getActivePlayer = () => activePlayer
+    const setActivePlayer = (newActivePlayer) => {
+        activePlayer = newActivePlayer
+        SwitchScreen.switchDiv.textContent = `${activePlayer.getName()}'s turn`
+    }
+    const switchActivePlayer = () =>{
+        if(getActivePlayer() == player1){
+            activePlayer = player2
+        }
+        else{
+            activePlayer = player1
+        }
+        SwitchScreen.switchDiv.textContent = `${activePlayer.getName()}'s turn`
+        
+    }
     const checkWinner = (activePlayer) =>{
         let activePlayerPosition = []
         for(let i = 0 ; i < gameBoard.getBoard().length ; i++){
@@ -131,158 +158,203 @@ const controller = (function(){
         else 
         return false
     }
-    let activePlayer = player1
-        const switchTurn = () =>{
-        activePlayer = activePlayer == player1 ? player2 : player1;
-        controllerDOM.renderCurrentPlayer()
+    
+    const playTurn = (cell) =>{
+        if(gameBoard.getBoard()[cell.dataset.number].getChosen() == true){
+            return
         }
-        const startOverActivePlayer = () =>{
-            activePlayer = player1
-        }
-        const getActivePlayer = () => activePlayer
-        
-    const playRound = (target) =>{
-        
-        
-        
-            console.log(`${getActivePlayer().getName()}'s turn`);
-           console.log(target)
-           let value ;
-           
-            value = gameBoard.chooseField(getActivePlayer(),target)
-            if(value == true){
-                return
-            }
-            else{
-                target.textContent = getActivePlayer().getMarker()
-            }
-           
-            
-            let result = checkWinner(getActivePlayer())
+        gameBoard.getBoard()[cell.dataset.number].setChosen(true) 
+        gameBoard.getBoard()[cell.dataset.number].setMarker(getActivePlayer().getMarker())
+        cell.textContent = getActivePlayer().getMarker()
+        let result = checkWinner(getActivePlayer())
         if(result == true){
-            console.log(`${getActivePlayer().getName()} won!`)
-            getActivePlayer().winRound()
-            controllerDOM.renderCurrentPlayer(1,getActivePlayer().getName())
-            gameBoard.setGameFinished(true)
-            controllerDOM.createRestartButton()
-            return 2
+            increaseWinnerScore(getActivePlayer())
+            SwitchScreen.switchDiv.textContent = `${getActivePlayer().getName()} won!`
+            RoundEnded = true
+            SwitchScreen.createResetBoard()
+            
+            return
         }
         if(gameBoard.getBoard().every(cell => cell.getChosen() == true)){
-            console.log('Draw!')
-            controllerDOM.renderCurrentPlayer(2,getActivePlayer().getName())
-            gameBoard.setGameFinished(true)
-            controllerDOM.createRestartButton()
-            return 1
+            RoundEnded = true
+            SwitchScreen.createResetBoard()
+            SwitchScreen.switchDiv.textContent = `Draw!`
+            return
         }
-            switchTurn()
+        switchActivePlayer()
+    }
+    const increaseWinnerScore = (winner) =>{
+        winner.addPoints()
+        if(winner.getPlayerNumber() == 1){
+            SwitchScreen.player1Score.textContent = winner.getPoints()
             
-        
-        
-    
-}
-
-
-return {playRound,player1,player2,startOverActivePlayer ,getActivePlayer}
+        }
+        else if(winner.getPlayerNumber() == 2){
+            SwitchScreen.player2Score.textContent = winner.getPoints()
+        }
+    }
+    return {player1,player2 ,increaseWinnerScore,  getActivePlayer , setActivePlayer , switchActivePlayer,playTurn , getRoundEnded , setRoundEnded}
 })();
+const SwitchScreen = (function(){
 
-const controllerDOM = (function(){
-   let players = document.querySelectorAll('input[class^=player]')
-   let button = document.querySelector('.start')
-   let xoContainer = document.querySelector('.x-o-container')
-   let gameContainer = document.querySelector('.game-container')
-   let container = document.querySelector('.container')
-   let div = document.createElement('div')
-    div.classList.add('Player')
-    gameContainer.insertBefore(div,xoContainer)
-
-
-   xoContainer.addEventListener('click', e=>{
-    console.log(e.target)
-   })
-
-   const renderCurrentPlayer = (number=0,player=undefined) =>{
-
+    let mainContainer = document.querySelector('.container')
+    let title = document.querySelector('.title')
+    let playerContainer = document.querySelector('.player-container')
+    let gameContainer = document.querySelector('.game-container')
+    let player1Avatar = document.querySelector('.avatar1 > img')
+    let player2Avatar = document.querySelector('.avatar2 > img')
+    let player1Score = document.querySelector('.player-1-name + .score')
+    let player2Score = document.querySelector('.player-2-name + .score')
+    let switchDiv = document.querySelector('.switchDiv')
+    let xoContainer = document.querySelector('.xo-container')
+    let switchPlayers = document.querySelector('.switchPlayers')
     
-    let currentPlayer = controller.getActivePlayer().getName()
-    if(number == 0)
-    div.textContent = `${currentPlayer}'s turn `   
-    else if(number == 1){
-        div.textContent = `${player} won!`
-    }
-    else if(number == 2){
-        div.textContent = 'Draw!'
-    }
-    
-   }
-   const renderDisplay = () =>{
-    
-    
-   
-    for(let i = 0 ; i < gameBoard.getBoard().length ; i++){
-        let cell  = document.createElement('div')
-        cell.classList.add('cell')
-        cell.dataset.number = i
+    const createResetBoard = () =>{
         
-        cell.addEventListener('click',e=>{
-            if(gameBoard.getGameFinished() == false)
-            {
-                value = controller.playRound(cell)
+        let resetBoardButton = document.createElement('button')
+        resetBoardButton.classList.add('restart')
+        
+        resetBoardButton.textContent = 'Another Round'
+        resetBoardButton.addEventListener('click',()=>{
+            gameBoard.clearBoard()
+            gameController.setRoundEnded(false)
+            gameController.setActivePlayer(gameController.player1)
+            renderXOGame()
+            resetBoardButton.parentElement.removeChild(resetBoardButton)
+        })
+        gameContainer.appendChild(resetBoardButton)
+    }
+    const removeContainerChildren = (container) =>{
+        Array.from(container.children).forEach(child =>{
+            container.removeChild(child)
+        });
+    }
+    const StartScreen = () =>{
+        removeContainerChildren(mainContainer)
+        gameController.setRoundEnded(false)
+        let startButton = document.createElement('button')
+        startButton.textContent = 'Start'
+        startButton.classList.add('start')
+        
+        startButton.addEventListener('click', ()=>{
+            
+           
+            
+            getPlayerNameInput()
+            determineChosenAvatar()
+            renderChosenAvatar()
+            gameController.setActivePlayer(gameController.player1)
+            renderXOGame()
+            gameScreen()
+        })
+        mainContainer.appendChild(title)
+        mainContainer.appendChild(playerContainer)
+        mainContainer.append(startButton)
 
+
+    }
+    const renderChosenAvatar = ()=>{
+        player1Avatar.setAttribute('src' , gameController.player1.getAvatar())
+        player2Avatar.setAttribute('src' , gameController.player2.getAvatar())
+    }
+    const determineChosenAvatar = () => {
+        let radioForm = document.querySelectorAll('input[type=radio]')
+        let player1Avatar = []
+        let player2Avatar = []
+        radioForm.forEach(form => {
+            if(form.getAttribute('name') == 'player1Icon'){
+                player1Avatar.push(form)
+            }
+            else{
+                player2Avatar.push(form)
+            }
+            })
+        player1Avatar.forEach(avatar =>{
+            if(avatar.checked == true){
+                gameController.player1.setAvatar(avatar.value)
+                console.log(avatar.value)
             }
             
-
-            
-            
         })
-        xoContainer.append(cell)
+        let allIsUnchecked = player1Avatar.every(avatar => !avatar.checked);
+            if(allIsUnchecked){
+                gameController.player1.setAvatar()
+            }
+        player2Avatar.forEach(avatar =>{
+            if(avatar.checked == true){
+                gameController.player2.setAvatar(avatar.value)
+            }
+        })
+        allIsUnchecked = player2Avatar.every(avatar => !avatar.checked);
+        if(allIsUnchecked){
+            gameController.player2.setAvatar()
+        }
+            
+    }
+    const renderNameInput = () =>{
+        let player1Name = document.querySelector('.player-1-name')
+        let player2Name = document.querySelector('.player-2-name')
+        player1Name.textContent = gameController.player1.getName()
+        player2Name.textContent = gameController.player2.getName()
+    }
+    const gameScreen = () =>{
+        removeContainerChildren(mainContainer)
+        
+        let returnButton = document.createElement('button')
+        returnButton.textContent = 'return'
+        returnButton.classList.add('return')
+        returnButton.addEventListener('click' , ()=>{
+            gameController.player1.resetPoints()
+            gameController.player2.resetPoints()
+            player1Score.textContent = gameController.player1.getPoints()
+            player2Score.textContent = gameController.player2.getPoints()
+            let resetButton = document.querySelector('.restart')
+            if(resetButton != undefined){
+                resetButton.parentElement.removeChild(resetButton)
+            }
+            gameBoard.clearBoard()
+
+            StartScreen()
+        })
+        
+        gameContainer.append(returnButton)
+        mainContainer.appendChild(gameContainer)
+        renderNameInput()
         
     }
-   }
-  createRestartButton = () =>{
-    let restartBtn = document.createElement('button')
-    restartBtn.textContent = 'Restart'
-    restartBtn.className="restart"
-    restartBtn.addEventListener('click',()=>{
-        Array.from(xoContainer.children).forEach(child =>{
+    
+    const getPlayerNameInput = () =>{
+        let playerInputs = document.querySelectorAll('input[type=text]')
+        let player1Input = playerInputs[0].value
+        let player2Input = playerInputs[1].value
+        gameController.player1.setName(player1Input)
+        gameController.player2.setName(player2Input)
+
+
+    }
+    const renderXOGame = () =>{
+        Array.from(xoContainer.children).forEach(child=>{
             xoContainer.removeChild(child)
         })
-        controller.startOverActivePlayer()
-        gameBoard.setBoard([])
-        gameBoard.setGameFinished(false)
-        for(let i = 0 ; i<9 ; i++){
-            gameBoard.getBoard().push(cell.createCell(i))
+        for(let i = 0 ; i < gameBoard.getBoard().length ; i++)
+        {
+            let cell = document.createElement('div');
+            cell.classList.add('cell')
+            cell.dataset.number = i
+            xoContainer.append(cell)
+            cell.addEventListener('click',e=>{
+                if(gameController.getRoundEnded()== false)
+                gameController.playTurn(cell)
+            })
+
         }
-        gameContainer.removeChild(restartBtn)
-        renderCurrentPlayer()
-        renderDisplay()
-        })
-    gameContainer.appendChild(restartBtn)
-  }
 
-   button.addEventListener('click',()=>{
-    let player1 = players[0].value
-    if(player1 == ''){
-        player1 = 'Player 1'
     }
-    controller.player1.setName(player1)
-
-    let player2 = players[1].value
-    if(player2 == ''){
-        player2 = 'Player 2'
-    }
-   
-    controller.player2.setName(player2)
-    
-    
-       Array.from(container.children).forEach(child =>{
-        if(child.getAttribute('class') != 'game-container')
-        container.removeChild(child)
-    })
-    renderCurrentPlayer()
-    renderDisplay()
-    
-   })
-  
-   
-   return {renderCurrentPlayer , createRestartButton}
+    return {StartScreen , gameScreen , getPlayerNameInput,player1Score,player2Score,switchDiv,renderXOGame,switchPlayers,createResetBoard}
 })();
+
+SwitchScreen.StartScreen()
+ document.querySelector('button').addEventListener('click', ()=>{
+   
+})
+
