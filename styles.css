@@ -71,7 +71,10 @@ h1.title{
 }
 label[class=playerInput]:hover ,.playerInput img:hover{
    
-    transform: scale(1.1);
+    transform: scale(1.15);
+}
+label[class=playerInput]:has(> input[type=radio]:checked) , .playerInput img:has( + input[type=radio]:checked){
+    transform: scale(1.15);
 }
 input[type=text]{
     max-width:230px
